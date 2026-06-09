@@ -1,6 +1,8 @@
 # 🌍 EcoTrack — Personal Carbon Footprint Tracker
 
-EcoTrack is a visually stunning, production-grade carbon footprint tracker built with a premium **liquid glassmorphism** design system. Track your daily activities, set carbon budgets, unlock achievements, and see real-time interactive insights about your ecological footprint.
+[![PromptWars Virtual](https://img.shields.io/badge/PromptWars-Virtual_Challenge_3-gradient?style=for-the-badge&logo=target&color=10b981&labelColor=0f172a)](https://github.com/Kumar3421/EcoTrack)
+
+EcoTrack is a visually stunning, production-grade carbon footprint tracker built with a premium **liquid glassmorphism** design system. Track your daily activities, set carbon budgets, unlock achievements, and see real-time interactive insights about your ecological footprint. Developed specifically for **PromptWars Virtual**.
 
 ### 🔗 Live Demo
 Visit the live application deployed on Google Cloud Run:
