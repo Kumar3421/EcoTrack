@@ -273,7 +273,7 @@ function setupCanvas(id) {
   return { ctx, w: r.width, h: r.height };
 }
 
-function drawDonut(data, colors) {
+function drawDonut(data, colors, hoveredIndex = null) {
   const s = setupCanvas('c-donut');
   if(!s) return;
   const { ctx, w, h } = s, cx = w / 2, cy = h / 2, R = Math.min(cx, cy) - 15, lw = 24;
@@ -292,13 +292,35 @@ function drawDonut(data, colors) {
     if(d.v <= 0) return;
     const sa = a, ea = a + (d.v / total) * Math.PI * 2;
     ctx.beginPath();
-    ctx.arc(cx, cy, R, sa, ea);
+    
+    const isHovered = hoveredIndex === i;
+    const currentR = isHovered ? R + 4 : R;
+    const currentLw = isHovered ? lw + 4 : lw;
+    
+    ctx.arc(cx, cy, currentR, sa, ea);
     ctx.strokeStyle = colors[i] || '#666';
-    ctx.lineWidth = lw;
+    ctx.lineWidth = currentLw;
     ctx.lineCap = 'round';
+    
+    if (hoveredIndex !== null && !isHovered) {
+      ctx.globalAlpha = 0.45;
+    } else {
+      ctx.globalAlpha = 1.0;
+    }
+    
+    if (isHovered) {
+      ctx.save();
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = colors[i] || '#666';
+    }
     ctx.stroke();
+    if (isHovered) {
+      ctx.restore();
+    }
+    
     a = ea + 0.03;
   });
+  ctx.globalAlpha = 1.0;
 }
 
 function drawTrend(data) {
@@ -1069,6 +1091,94 @@ function bind() {
     card.style.setProperty('--mouse-x', `${x}px`);
     card.style.setProperty('--mouse-y', `${y}px`);
   });
+
+  // Interactive Donut Chart Hover listener
+  const donutCanvas = document.getElementById('c-donut');
+  if (donutCanvas) {
+    donutCanvas.onmousemove = (e) => {
+      const rect = donutCanvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+      const R = Math.min(cx, cy) - 15;
+      const lw = 24;
+      
+      if (dist >= R - lw/2 - 4 && dist <= R + lw/2 + 6) {
+        let theta = Math.atan2(y - cy, x - cx);
+        if (theta < -Math.PI / 2) {
+          theta += Math.PI * 2;
+        }
+        
+        const tl = todayLogs(), tt = tl.reduce((s, l) => s + l.co2, 0);
+        const ct = catTotals(tl), keys = Object.keys(ct);
+        const total = keys.reduce((s, k) => s + ct[k], 0);
+        
+        if (total > 0) {
+          let a = -Math.PI / 2;
+          let hoveredIdx = null;
+          
+          keys.forEach((k, i) => {
+            const val = ct[k];
+            if (val <= 0) return;
+            const sa = a;
+            const ea = a + (val / total) * Math.PI * 2;
+            if (theta >= sa && theta <= ea) {
+              hoveredIdx = i;
+            }
+            a = ea + 0.03;
+          });
+          
+          if (hoveredIdx !== null) {
+            const catKey = keys[hoveredIdx];
+            const catName = EF[catKey].label;
+            const catVal = ct[catKey];
+            
+            document.getElementById('donut-val').textContent = catVal.toFixed(2);
+            document.getElementById('chart-lbl').textContent = catName;
+            
+            document.querySelectorAll('.legend-row').forEach((row, i) => {
+              if (i === hoveredIdx) {
+                row.style.transform = 'translateX(6px)';
+                row.style.opacity = '1';
+                row.style.textShadow = '0 0 10px ' + CAT_COLORS[catKey] + '40';
+              } else {
+                row.style.transform = '';
+                row.style.opacity = '0.4';
+                row.style.textShadow = 'none';
+              }
+            });
+            
+            drawDonut(keys.map(k => ({ v: ct[k] })), keys.map(k => CAT_COLORS[k]), hoveredIdx);
+            return;
+          }
+        }
+      }
+      resetDonutHover();
+    };
+    
+    donutCanvas.onmouseleave = () => {
+      resetDonutHover();
+    };
+    
+    const resetDonutHover = () => {
+      const tl = todayLogs(), tt = tl.reduce((s, l) => s + l.co2, 0);
+      const ct = catTotals(tl), keys = Object.keys(ct);
+      
+      document.getElementById('donut-val').textContent = tt.toFixed(2);
+      document.getElementById('chart-lbl').textContent = 'kg CO₂';
+      
+      document.querySelectorAll('.legend-row').forEach(row => {
+        row.style.transform = '';
+        row.style.opacity = '1';
+        row.style.textShadow = 'none';
+      });
+      
+      drawDonut(keys.map(k => ({ v: ct[k] })), keys.map(k => CAT_COLORS[k]), null);
+    };
+  }
 
   let rt;
   window.onresize = () => {
