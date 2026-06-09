@@ -1,0 +1,7 @@
+# Workspace temp/dependency files
+node_modules/
+.gemini/
+.agents/
+*.log
+.DS_Store
+Thumbs.db

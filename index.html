@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoTrack — Personal Carbon Footprint Tracker</title>
+  <meta name="description" content="Track, understand, and reduce your carbon footprint with personalized insights and daily challenges.">
+  <meta name="theme-color" content="#030712">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=1.0.1">
+</head>
+<body>
+
+<!-- Confetti Canvas Overlay -->
+<canvas id="c-confetti"></canvas>
+
+<!-- Loading Screen -->
+<div id="loading" class="loading">
+  <div class="loading-inner">
+    <span class="loading-globe">🌍</span>
+    <h1 class="loading-name">EcoTrack</h1>
+    <div class="loading-bar"><div class="loading-fill"></div></div>
+  </div>
+</div>
+
+<!-- Floating Liquid background orb -->
+<div class="orb-3"></div>
+
+<!-- SVG Gradient Definitions -->
+<svg style="position:absolute;width:0;height:0" aria-hidden="true">
+  <defs>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#06d6a0"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- App Wrap -->
+<div id="app" class="app-wrap hidden">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="logo"><span class="logo-icon">🌍</span><h1 class="logo-text">EcoTrack</h1></div>
+    <div class="header-actions">
+      <div class="level-pill"><span id="h-lvl-icon">🌱</span><span id="h-lvl-text">Lvl 1</span></div>
+      <div class="xp-mini"><div class="xp-mini-fill" id="h-xp-fill" style="width:0%"></div></div>
+      <button class="btn-icon" id="btn-theme" aria-label="Toggle theme"><span id="theme-ico">🌙</span></button>
+    </div>
+  </header>
+
+  <!-- Main Content scrollable container -->
+  <main class="main" id="main-scroll">
+    <div class="container">
+
+      <!-- ═══════ DASHBOARD VIEW ═══════ -->
+      <section id="v-dash" class="view active">
+        <!-- Daily Budget Warning Banner -->
+        <div id="budget-warning" class="budget-warning hidden">
+          <span>⚠️</span>
+          <span>Daily Carbon Budget Exceeded! Try swapping activities to reduce footprint.</span>
+        </div>
+
+        <div class="hero glass glass-spotlight">
+          <div class="hero-top">
+            <div><h2 class="greeting" id="greet">Good evening</h2><p class="date-text" id="hero-date"></p></div>
+            <div class="streak" id="streak-wrap"><span class="streak-fire">🔥</span><span id="streak-n">0</span><span>day streak</span></div>
+          </div>
+          <div class="hero-metric">
+            <span class="big-num" id="today-co2">0.00</span><span class="big-unit">kg CO₂</span>
+            <p class="metric-sub">Today's Carbon Footprint</p>
+          </div>
+          <div class="comp-bar-wrap">
+            <div class="comp-bar">
+              <div class="comp-fill" id="comp-fill" style="width:0%"></div>
+              <div class="comp-marker" id="comp-marker" style="left:0%"><span>You</span></div>
+            </div>
+            <div class="comp-labels"><span id="comp-lbl-zero">0 kg</span><span id="comp-lbl-avg">Avg: 12.88 kg</span></div>
+          </div>
+        </div>
+        
+        <div class="section-head"><h3>Quick Log</h3><button class="btn-link" id="btn-goto-log">See all →</button></div>
+        <div class="ql-grid" id="ql-grid"></div>
+        
+        <div class="section-head"><h3>Today's Breakdown</h3></div>
+        <div class="glass chart-wrap glass-spotlight">
+          <div class="chart-box">
+            <canvas id="c-donut" width="200" height="200"></canvas>
+            <div class="chart-center"><span class="chart-val" id="donut-val">0.00</span><span class="chart-lbl">kg CO₂</span></div>
+          </div>
+          <div class="legend" id="legend"></div>
+        </div>
+        
+        <div class="section-head"><h3>7-Day Trend</h3></div>
+        <div class="glass trend-wrap glass-spotlight"><canvas id="c-trend" width="600" height="180"></canvas></div>
+        
+        <div class="section-head"><h3>Today's Challenges</h3></div>
+        <div id="dash-ch" class="challenges"></div>
+      </section>
+
+      <!-- ═══════ LOG ACTIVITY VIEW ═══════ -->
+      <section id="v-log" class="view">
+        <h2 class="view-title">Log Activity</h2>
+        <p class="view-sub">Track your daily carbon-producing activities</p>
+        <div class="cat-tabs" id="cat-tabs"></div>
+        <div class="act-grid" id="act-grid"></div>
+        
+        <!-- Interactive Log Form -->
+        <div class="log-form glass glass-spotlight hidden" id="log-form">
+          <div class="lf-head">
+            <span class="lf-icon" id="lf-icon">🚗</span>
+            <div><h3 id="lf-title">Activity</h3><p class="lf-unit" id="lf-unit">Unit: km</p></div>
+            <button class="btn-close" id="btn-close-lf" aria-label="Close form">✕</button>
+          </div>
+          <div class="lf-desc" id="lf-desc">Logged activities contribute to your carbon total. Adjust values using the controls below.</div>
+          
+          <div class="input-grp">
+            <label for="lf-amount">Amount</label>
+            <div class="input-row">
+              <button class="btn-adj" id="btn-dec" aria-label="Decrease amount">−</button>
+              <input type="number" id="lf-amount" class="inp" value="1" min="0" step="0.5">
+              <button class="btn-adj" id="btn-inc" aria-label="Increase amount">+</button>
+            </div>
+            
+            <!-- Range Slider -->
+            <div class="slider-container">
+              <input type="range" id="lf-slider" class="slider" min="1" max="100" value="1" step="0.5">
+              <span class="slider-val" id="lf-slider-val">1</span>
+            </div>
+            
+            <!-- Quick Add Shortcuts -->
+            <div class="quick-vals" id="lf-quick-vals">
+              <button class="quick-val-btn" data-val="5">+5</button>
+              <button class="quick-val-btn" data-val="10">+10</button>
+              <button class="quick-val-btn" data-val="50">+50</button>
+              <button class="quick-val-btn" data-val="max">Max</button>
+            </div>
+          </div>
+          
+          <div class="co2-preview"><span class="lbl">Estimated CO₂:</span><span class="val" id="lf-preview">0.00 kg</span></div>
+          <button class="btn-primary" id="btn-submit-log">Log Activity</button>
+        </div>
+        
+        <div class="section-head"><h3>Today's Entries</h3><span class="entry-count" id="entry-ct">0 entries</span></div>
+        <div class="entries" id="entries"></div>
+      </section>
+
+      <!-- ═══════ INSIGHTS VIEW ═══════ -->
+      <section id="v-insights" class="view">
+        <h2 class="view-title">Insights</h2>
+        <p class="view-sub">Personalized tips to reduce your footprint</p>
+        <div class="glass insight-hero glass-spotlight">
+          <span class="insight-val" id="week-total">0.00</span>
+          <p class="insight-lbl">kg CO₂ this week</p>
+          <div class="insight-comp"><div class="comp-item"><span class="dot good" id="vs-dot"></span><span id="vs-text">--</span></div></div>
+        </div>
+        
+        <div class="section-head"><h3>Your Biggest Impact</h3></div>
+        <div class="glass impact-card glass-spotlight" id="impact-card">
+          <div class="impact-icon" id="imp-icon">🚗</div>
+          <div class="impact-info"><h4 id="imp-name">Transport</h4><p id="imp-detail">Log activities to see insights</p></div>
+          <div class="impact-val" id="imp-val">-- kg</div>
+        </div>
+        
+        <div class="section-head"><h3>Tips For You</h3><button class="btn-link" id="btn-re-tips">Refresh ↻</button></div>
+        <div class="tips" id="tips-list"></div>
+        
+        <div class="section-head"><h3>Weekday vs Weekend</h3></div>
+        <div class="glass pattern-wrap glass-spotlight">
+          <div class="pattern-bars">
+            <div class="pbar-grp"><div class="pbar-bg"><div class="pbar-fill" id="wd-bar" style="height:0%"></div></div><span class="pbar-label">Weekdays</span><span class="pbar-val" id="wd-val">-- kg/day</span></div>
+            <div class="pbar-grp"><div class="pbar-bg"><div class="pbar-fill" id="we-bar" style="height:0%"></div></div><span class="pbar-label">Weekends</span><span class="pbar-val" id="we-val">-- kg/day</span></div>
+          </div>
+        </div>
+        
+        <div class="section-head"><h3>What If?</h3></div>
+        <div class="whatif" id="whatif-list"></div>
+
+        <!-- Interactive Tree Simulator -->
+        <div class="section-head"><h3>Interactive Offset Calculator</h3></div>
+        <div class="glass simulator-card glass-spotlight">
+          <p class="whatif-q">Calculate how many trees are needed to offset your weekly footprint:</p>
+          <div class="slider-container" style="margin-top: 10px;">
+            <input type="range" id="offset-slider" class="slider" min="0" max="150" value="0" step="1">
+            <span class="slider-val" id="offset-slider-val" style="width: 60px;">0 kg</span>
+          </div>
+          <div class="sim-grid">
+            <div class="sim-metric"><span class="sim-num" id="sim-trees">0</span><span class="sim-lbl">Trees required (for 1 yr)</span></div>
+            <div class="sim-metric"><span class="sim-num" id="sim-cost">$0.00</span><span class="sim-lbl">Est. planting cost</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════ GOALS VIEW ═══════ -->
+      <section id="v-goals" class="view">
+        <h2 class="view-title">Goals & Challenges</h2>
+        <p class="view-sub">Set targets and earn rewards</p>
+        
+        <div class="glass level-card glass-spotlight">
+          <div class="level-main">
+            <span class="level-big" id="lvl-icon">🌱</span>
+            <div class="level-info"><h3 id="lvl-title">Seedling</h3><p class="level-sub">Level <span id="lvl-num">1</span></p></div>
+          </div>
+          <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+          <div class="xp-labels"><span id="xp-cur">0 XP</span><span id="xp-next">50 XP to next</span></div>
+        </div>
+        
+        <div class="section-head"><h3>Weekly Goal</h3></div>
+        <div class="glass goal-card glass-spotlight">
+          <div class="goal-setup" id="goal-setup">
+            <p>Set a weekly CO₂ reduction target</p>
+            <div class="goal-input-row"><input type="number" id="goal-inp" class="inp" placeholder="e.g. 80" min="1"><span class="goal-unit">kg CO₂/week</span></div>
+            <button class="btn-primary" id="btn-set-goal">Set Goal</button>
+          </div>
+          <div class="goal-progress hidden" id="goal-prog">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"/><circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="52"/></svg>
+              <div class="ring-text"><span class="ring-pct" id="ring-pct">0%</span></div>
+            </div>
+            <div class="goal-details">
+              <p><span id="g-cur">0</span> / <span id="g-tgt">80</span> kg CO₂</p>
+              <p class="goal-remain" id="g-rem">80 kg remaining</p>
+              <button class="btn-link" id="btn-reset-goal" style="margin-top:6px">Reset Goal</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section-head"><h3>Today's Challenges</h3></div>
+        <div class="challenges" id="ch-list"></div>
+        
+        <div class="section-head"><h3>Badges</h3><span class="badge-count" id="badge-ct">0 / 16</span></div>
+        <div class="badges-grid" id="badges"></div>
+      </section>
+
+      <!-- ═══════ HISTORY VIEW ═══════ -->
+      <section id="v-history" class="view">
+        <h2 class="view-title">History</h2>
+        <p class="view-sub">Review your past activities</p>
+        
+        <div class="glass filter-bar glass-spotlight">
+          <div class="filter-grp"><label for="f-start">From</label><input type="date" id="f-start" class="inp"></div>
+          <div class="filter-grp"><label for="f-end">To</label><input type="date" id="f-end" class="inp"></div>
+          <div class="filter-grp">
+            <label for="f-cat">Category</label>
+            <select id="f-cat" class="inp">
+              <option value="all">All</option>
+              <option value="transport">🚗 Transport</option>
+              <option value="energy">⚡ Energy</option>
+              <option value="food">🍔 Food</option>
+              <option value="shopping">🛍️ Shopping</option>
+              <option value="waste">♻️ Waste</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="hist-stats">
+          <div class="stat-card"><span class="stat-val" id="h-total">0.00</span><span class="stat-lbl">Total kg CO₂</span></div>
+          <div class="stat-card"><span class="stat-val" id="h-entries">0</span><span class="stat-lbl">Entries</span></div>
+          <div class="stat-card"><span class="stat-val" id="h-avg">0.00</span><span class="stat-lbl">Avg / Day</span></div>
+        </div>
+        
+        <div class="section-head"><h3>Monthly Overview</h3></div>
+        <div class="glass monthly-wrap glass-spotlight"><canvas id="c-monthly" width="600" height="220"></canvas></div>
+        
+        <div class="section-head"><h3>Activity Log</h3></div>
+        <div class="hist-list" id="hist-list"></div>
+      </section>
+
+      <!-- ═══════ SETTINGS VIEW ═══════ -->
+      <section id="v-settings" class="view">
+        <h2 class="view-title">Settings</h2>
+        <p class="view-sub">Configure localization and backups</p>
+        
+        <div class="glass settings-list glass-spotlight">
+          <!-- Localization Setting -->
+          <div class="setting-item">
+            <h3 class="setting-title">Comparison Region</h3>
+            <p class="setting-desc">Set your local region to adjust national carbon averages.</p>
+            <div class="setting-ctrl">
+              <select id="set-region" class="inp">
+                <option value="world">World Average (12.88 kg/day)</option>
+                <option value="usa">United States (42.52 kg/day)</option>
+                <option value="eu">European Union (18.63 kg/day)</option>
+                <option value="uk">United Kingdom (15.07 kg/day)</option>
+                <option value="india">India (5.21 kg/day)</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Carbon Budget Setting -->
+          <div class="setting-item" style="border-top: 1px solid var(--border);">
+            <h3 class="setting-title">Daily Carbon Budget</h3>
+            <p class="setting-desc">Set a maximum target daily carbon limit (kg CO₂). Emitting more shows warning banners.</p>
+            <div class="setting-ctrl" style="max-width: 180px;">
+              <input type="number" id="set-budget" class="inp" placeholder="e.g. 15" min="1">
+            </div>
+          </div>
+          
+          <!-- Import/Export Setting -->
+          <div class="setting-item" style="border-top: 1px solid var(--border);">
+            <h3 class="setting-title">Backup & Restore</h3>
+            <p class="setting-desc">Export your logged footprints to a file, or restore them from a previous backup.</p>
+            <div class="setting-ctrl">
+              <button class="btn-secondary" id="btn-export">Export Data</button>
+              <button class="btn-secondary" id="btn-import">Import Data</button>
+              <input type="file" id="file-import" class="hidden" accept=".json">
+            </div>
+          </div>
+          
+          <!-- Data Reset Setting -->
+          <div class="setting-item" style="border-top: 1px solid var(--border);">
+            <h3 class="setting-title" style="color: var(--danger);">Reset Application Data</h3>
+            <p class="setting-desc">Permanently erase all logs, goals, streak, and achievements. This cannot be undone.</p>
+            <div class="setting-ctrl">
+              <button class="btn-danger" id="btn-reset-data">Reset Everything</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Floating Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-v="dash"><span class="ni">📊</span><span class="nl">Dashboard</span></button>
+    <button class="nav-btn" data-v="log"><span class="ni">➕</span><span class="nl">Log</span></button>
+    <button class="nav-btn" data-v="insights"><span class="ni">💡</span><span class="nl">Insights</span></button>
+    <button class="nav-btn" data-v="goals"><span class="ni">🎯</span><span class="nl">Goals</span></button>
+    <button class="nav-btn" data-v="history"><span class="ni">📅</span><span class="nl">History</span></button>
+    <button class="nav-btn" data-v="settings"><span class="ni">⚙️</span><span class="nl">Settings</span></button>
+  </nav>
+</div>
+
+<!-- Toast Notifications -->
+<div id="toast" class="toast hidden"><span class="toast-i" id="toast-i">✅</span><span id="toast-m"></span></div>
+
+<!-- Badge Unlock Celebration Modal -->
+<div class="modal-bg hidden" id="modal">
+  <div class="modal glass">
+    <span class="modal-bi" id="m-icon">🏆</span>
+    <h3 class="modal-title">Badge Unlocked!</h3>
+    <p class="modal-name" id="m-name">Achievement</p>
+    <p class="modal-desc" id="m-desc">Description</p>
+    <button class="btn-primary" id="btn-close-modal">Awesome!</button>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="data.js?v=1.0.1"></script>
+<script src="app.js?v=1.0.1"></script>
+</body>
+</html>
