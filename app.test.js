@@ -72,4 +72,39 @@ describe('EcoTrack Unit Tests', () => {
     expect(def.streak).toBe(0);
     expect(def.theme).toBe('dark');
   });
+
+  it('should verify date utilities', () => {
+    const { toLocalYYYYMMDD, today, weekStart } = globalThis.test_exports;
+    const date = new Date(2026, 5, 10); // June 10, 2026 (Month is 0-indexed, so 5 is June)
+    expect(toLocalYYYYMMDD(date)).toBe('2026-06-10');
+    expect(today()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(weekStart()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('should verify unique ID generator', () => {
+    const { uid } = globalThis.test_exports;
+    const id1 = uid();
+    const id2 = uid();
+    expect(id1).not.toBe(id2);
+    expect(id1.length).toBeGreaterThan(5);
+  });
+
+  it('should verify category totals calculator', () => {
+    const { catTotals } = globalThis.test_exports;
+    const sampleLogs = [
+      { cat: 'transport', co2: 5.5 },
+      { cat: 'transport', co2: 2.2 },
+      { cat: 'energy', co2: 10.0 }
+    ];
+    const totals = catTotals(sampleLogs);
+    expect(totals.transport).toBe(7.7);
+    expect(totals.energy).toBe(10.0);
+    expect(totals.food).toBe(0.0);
+  });
+
+  it('should verify getGreeting outputs correct greeting based on time', () => {
+    const { getGreeting } = globalThis.test_exports;
+    const greeting = getGreeting();
+    expect(['Good night', 'Good morning', 'Good afternoon', 'Good evening']).toContain(greeting);
+  });
 });

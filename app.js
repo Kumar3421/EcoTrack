@@ -5,29 +5,20 @@
 (function(){
 'use strict';
 
-// ─── DOM CACHE OPTIMIZATION ─────────────────────────────────
+// ─── DOM ELEMENT CACHE ───────────────────────────────────────
 const DOM_CACHE = {};
-if (typeof document !== 'undefined') {
-  const getElementByIdOriginal = document.getElementById;
-  document.getElementById = function(id) {
-    if (!DOM_CACHE[id]) {
-      DOM_CACHE[id] = getElementByIdOriginal.call(document, id);
-    }
-    return DOM_CACHE[id];
-  };
+function dom(id) {
+  if (typeof document === 'undefined') return null;
+  if (!DOM_CACHE[id]) {
+    const el = document.getElementById(id);
+    if (el) DOM_CACHE[id] = el;
+    return el;
+  }
+  return DOM_CACHE[id];
 }
 
-// ─── STATE & STORAGE ───────────────────────────────────────
-const SK = 'ecotrack_v2';
-let S = load();
 
-const REGION_AVGS = {
-  world: { label: 'World Avg', val: 12.88 },
-  usa: { label: 'USA Avg', val: 42.52 },
-  eu: { label: 'EU Avg', val: 18.63 },
-  uk: { label: 'UK Avg', val: 15.07 },
-  india: { label: 'India Avg', val: 5.21 }
-};
+;
 
 function load() {
   try {
@@ -64,7 +55,7 @@ let confettiParticles = [];
 const confettiColors = ['#10b981', '#06d6a0', '#34d399', '#818cf8', '#f59e0b', '#f472b6', '#2dd4bf'];
 
 function triggerConfetti() {
-  const c = document.getElementById('c-confetti');
+  const c = dom('c-confetti');
   if (!c) return;
   const ctx = c.getContext('2d');
   c.width = window.innerWidth;
@@ -93,7 +84,7 @@ function triggerConfetti() {
 }
 
 function updateConfetti() {
-  const c = document.getElementById('c-confetti');
+  const c = dom('c-confetti');
   if (!c) { confettiActive = false; return; }
   const ctx = c.getContext('2d');
   ctx.clearRect(0, 0, c.width, c.height);
@@ -252,13 +243,13 @@ const VIEWS = ['dash', 'log', 'insights', 'goals', 'history', 'settings'];
 function nav(v) {
   if(!VIEWS.includes(v)) v = 'dash';
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-  const el = document.getElementById('v-' + v);
+  const el = dom('v-' + v);
   if(el) el.classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.querySelector(`.nav-btn[data-v="${v}"]`)?.classList.add('active');
   location.hash = v;
   render(v);
-  document.getElementById('main-scroll').scrollTop = 0;
+  dom('main-scroll').scrollTop = 0;
 }
 
 function render(v) {
@@ -286,7 +277,7 @@ function animNum(id, target, dec = 2) {
 
 // ─── CHARTS (Canvas Dimension Safe + CSS variables safe) ──
 function setupCanvas(id) {
-  const c = document.getElementById(id);
+  const c = dom(id);
   if(!c) return null;
   const ctx = c.getContext('2d'), dpr = window.devicePixelRatio || 1, r = c.getBoundingClientRect();
   if(r.width <= 0 || r.height <= 0) return null;
@@ -486,23 +477,23 @@ function drawMonthly(logs) {
 // ─── DASHBOARD ─────────────────────────────────────────────
 function rDash() {
   const tl = todayLogs(), tt = tl.reduce((s, l) => s + l.co2, 0);
-  document.getElementById('greet').textContent = getGreeting();
-  document.getElementById('hero-date').textContent = fmtDate(today());
-  document.getElementById('streak-n').textContent = S.streak;
+  dom('greet').textContent = getGreeting();
+  dom('hero-date').textContent = fmtDate(today());
+  dom('streak-n').textContent = S.streak;
   animNum('today-co2', tt);
 
   // Benchmarks regionalization
   const regionConfig = REGION_AVGS[S.region || 'world'] || REGION_AVGS.world;
   const regionAvg = regionConfig.val;
-  document.getElementById('comp-lbl-avg').textContent = `${regionConfig.label}: ${regionAvg.toFixed(2)} kg`;
+  dom('comp-lbl-avg').textContent = `${regionConfig.label}: ${regionAvg.toFixed(2)} kg`;
 
   setTimeout(() => {
-    document.getElementById('comp-fill').style.width = Math.min(tt / regionAvg * 100, 100) + '%';
-    document.getElementById('comp-marker').style.left = Math.min(tt / regionAvg * 100, 100) + '%';
+    dom('comp-fill').style.width = Math.min(tt / regionAvg * 100, 100) + '%';
+    dom('comp-marker').style.left = Math.min(tt / regionAvg * 100, 100) + '%';
   }, 100);
 
   // Carbon budget check banner
-  const warn = document.getElementById('budget-warning');
+  const warn = dom('budget-warning');
   if(S.budget && tt > S.budget) {
     warn.classList.remove('hidden');
   } else {
@@ -512,8 +503,8 @@ function rDash() {
   // Donut
   const ct = catTotals(tl), keys = Object.keys(ct);
   drawDonut(keys.map(k => ({ v: ct[k] })), keys.map(k => CAT_COLORS[k]));
-  document.getElementById('donut-val').textContent = tt.toFixed(2);
-  document.getElementById('legend').innerHTML = keys.map(k => `
+  dom('donut-val').textContent = tt.toFixed(2);
+  dom('legend').innerHTML = keys.map(k => `
     <div class="legend-row">
       <span class="legend-dot" style="background:${CAT_COLORS[k]}"></span>
       <span><span role="img" aria-hidden="true">${escapeHTML(EF[k].icon)}</span> ${escapeHTML(EF[k].label)}</span>
@@ -521,7 +512,7 @@ function rDash() {
     </div>`).join('');
   drawTrend(last7());
   // Quick log
-  const qlg = document.getElementById('ql-grid');
+  const qlg = dom('ql-grid');
   qlg.innerHTML = PRESETS.map(p => {
     const co2 = calcCO2(p.cat, p.act, p.amt);
     return `<button class="ql-btn" data-p="${escapeHTML(p.id)}"><span class="ql-icon" role="img" aria-hidden="true">${escapeHTML(p.i)}</span><span class="ql-label">${escapeHTML(p.l)}</span><span class="ql-co2">${co2.toFixed(2)} kg</span></button>`;
@@ -535,7 +526,7 @@ function rDash() {
     }
   });
   // Challenges
-  const dc = document.getElementById('dash-ch'), chs = getDailyCh(3), comp = S.challenges[today()] || [];
+  const dc = dom('dash-ch'), chs = getDailyCh(3), comp = S.challenges[today()] || [];
   dc.innerHTML = chs.map(c => `
     <div class="ch-card ${comp.includes(c.id) ? 'done' : ''}" data-c="${c.id}">
       <div class="ch-check">${comp.includes(c.id) ? '✓' : ''}</div>
@@ -552,7 +543,7 @@ let selCat = 'transport', selAct = null;
 function rLog() { rCatTabs(); rActGrid(); rEntries(); hideLF(); }
 
 function rCatTabs() {
-  const el = document.getElementById('cat-tabs');
+  const el = dom('cat-tabs');
   el.innerHTML = Object.keys(EF).map(k => `
     <button class="cat-tab ${k === selCat ? 'active' : ''}" data-c="${k}" ${k === selCat ? `style="background:${CAT_COLORS[k]};border-color:${CAT_COLORS[k]};box-shadow: 0 0 15px ${CAT_COLORS[k]}33"` : ''} >
       <span role="img" aria-hidden="true">${escapeHTML(EF[k].icon)}</span> ${escapeHTML(EF[k].label)}
@@ -561,7 +552,7 @@ function rCatTabs() {
 }
 
 function rActGrid() {
-  const el = document.getElementById('act-grid'), acts = EF[selCat].acts;
+  const el = dom('act-grid'), acts = EF[selCat].acts;
   el.innerHTML = Object.keys(acts).map(k => {
     const a = acts[k];
     return `
@@ -576,11 +567,11 @@ function rActGrid() {
 
 function showLF() {
   if(!selAct) return;
-  const f = document.getElementById('log-form'), a = EF[selCat].acts[selAct];
-  document.getElementById('lf-icon').textContent = a.i;
-  document.getElementById('lf-title').textContent = a.l;
-  document.getElementById('lf-unit').textContent = 'Unit: ' + a.u;
-  document.getElementById('lf-amount').value = 1;
+  const f = dom('log-form'), a = EF[selCat].acts[selAct];
+  dom('lf-icon').textContent = a.i;
+  dom('lf-title').textContent = a.l;
+  dom('lf-unit').textContent = 'Unit: ' + a.u;
+  dom('lf-amount').value = 1;
 
   // Add description contexts
   const descriptions = {
@@ -600,33 +591,33 @@ function showLF() {
     recycling: "Recycled material avoids raw material extractions, representing a low carbon impact.",
     composting: "Organic matter decomposition in a compost pile produces tiny offsets compared to landfills."
   };
-  document.getElementById('lf-desc').textContent = descriptions[selAct] || `Track and log emissions for ${a.l}. Estimations are based on average lifecycle analysis.`;
+  dom('lf-desc').textContent = descriptions[selAct] || `Track and log emissions for ${a.l}. Estimations are based on average lifecycle analysis.`;
 
   // Sync range slider
-  const slider = document.getElementById('lf-slider');
+  const slider = dom('lf-slider');
   slider.value = 1;
   // Dynamic ranges based on unit type
   if(a.u === 'km') { slider.min = 1; slider.max = 100; slider.step = 1; }
   else if(a.u === 'kWh') { slider.min = 1; slider.max = 50; slider.step = 0.5; }
   else if(a.u === 'hours') { slider.min = 0.5; slider.max = 24; slider.step = 0.5; }
   else { slider.min = 1; slider.max = 10; slider.step = 1; }
-  document.getElementById('lf-slider-val').textContent = slider.value + ' ' + a.u;
+  dom('lf-slider-val').textContent = slider.value + ' ' + a.u;
 
   updPreview();
   f.classList.remove('hidden');
   f.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-function hideLF() { document.getElementById('log-form').classList.add('hidden'); selAct = null; }
+function hideLF() { dom('log-form').classList.add('hidden'); selAct = null; }
 
 function updPreview() {
-  const amt = parseFloat(document.getElementById('lf-amount')?.value) || 0;
-  document.getElementById('lf-preview').textContent = calcCO2(selCat, selAct, amt).toFixed(2) + ' kg';
+  const amt = parseFloat(dom('lf-amount')?.value) || 0;
+  dom('lf-preview').textContent = calcCO2(selCat, selAct, amt).toFixed(2) + ' kg';
 }
 
 function rEntries() {
-  const el = document.getElementById('entries'), tl = todayLogs();
-  document.getElementById('entry-ct').textContent = tl.length + ' entries';
+  const el = dom('entries'), tl = todayLogs();
+  dom('entry-ct').textContent = tl.length + ' entries';
   if(!tl.length) {
     el.innerHTML = '<div class="empty"><span class="empty-icon" role="img" aria-hidden="true">📝</span><p>No entries yet. Start logging!</p></div>';
     return;
@@ -654,14 +645,14 @@ function rInsights() {
   animNum('week-total', wt);
 
   // Update offset simulator starting position
-  const offsetSlider = document.getElementById('offset-slider');
+  const offsetSlider = dom('offset-slider');
   if(offsetSlider) {
     offsetSlider.value = Math.min(Math.round(wt), 150);
     updateOffsetSim(offsetSlider.value);
   }
 
   const regionConfig = REGION_AVGS[S.region || 'world'] || REGION_AVGS.world;
-  const avgW = regionConfig.val * 7, vt = document.getElementById('vs-text'), vd = document.getElementById('vs-dot');
+  const avgW = regionConfig.val * 7, vt = dom('vs-text'), vd = dom('vs-dot');
   if(!wl.length) {
     vt.textContent = 'Log activities to see comparison';
     vd.className = 'dot neutral';
@@ -675,10 +666,10 @@ function rInsights() {
   const ct = catTotals(wl), sc = Object.entries(ct).sort(([,a], [,b]) => b - a), top = sc[0];
   if(top) {
     const c = EF[top[0]];
-    document.getElementById('imp-icon').textContent = c?.icon || '📊';
-    document.getElementById('imp-name').textContent = c?.label || top[0];
-    document.getElementById('imp-val').textContent = top[1].toFixed(1) + ' kg';
-    document.getElementById('imp-detail').textContent = wl.length && top[1] > 0 ? ((top[1] / wt) * 100).toFixed(0) + '% of weekly emissions' : 'Log more to see insights';
+    dom('imp-icon').textContent = c?.icon || '📊';
+    dom('imp-name').textContent = c?.label || top[0];
+    dom('imp-val').textContent = top[1].toFixed(1) + ' kg';
+    dom('imp-detail').textContent = wl.length && top[1] > 0 ? ((top[1] / wt) * 100).toFixed(0) + '% of weekly emissions' : 'Log more to see insights';
   }
   rTips();
   // Weekday/weekend
@@ -690,13 +681,13 @@ function rInsights() {
   });
   const wdA = wdD.size ? wdT / wdD.size : 0, weA = weD.size ? weT / weD.size : 0, mx = Math.max(wdA, weA, 1);
   setTimeout(() => {
-    document.getElementById('wd-bar').style.height = (wdA / mx * 100) + '%';
-    document.getElementById('we-bar').style.height = (weA / mx * 100) + '%';
+    dom('wd-bar').style.height = (wdA / mx * 100) + '%';
+    dom('we-bar').style.height = (weA / mx * 100) + '%';
   }, 200);
-  document.getElementById('wd-val').textContent = wdA.toFixed(1) + ' kg/day';
-  document.getElementById('we-val').textContent = weA.toFixed(1) + ' kg/day';
+  dom('wd-val').textContent = wdA.toFixed(1) + ' kg/day';
+  dom('we-val').textContent = weA.toFixed(1) + ' kg/day';
   // What-if
-  const wif = document.getElementById('whatif-list'), scenarios = [];
+  const wif = dom('whatif-list'), scenarios = [];
   const carL = wl.filter(l => l.act === 'car_petrol' || l.act === 'car_diesel'), carCO2 = carL.reduce((s, l) => s + l.co2, 0);
   if(carCO2 > 0) {
     const km = carL.reduce((s, l) => s + l.amt, 0), saved = (carCO2 - km * 0.089).toFixed(1);
@@ -717,7 +708,7 @@ function rInsights() {
 }
 
 function rTips() {
-  const el = document.getElementById('tips-list'), tips = getRelevantTips(4);
+  const el = dom('tips-list'), tips = getRelevantTips(4);
   const impL = { high: 'High Impact', medium: 'Medium', low: 'Low' };
   el.innerHTML = tips.map(t => `
     <div class="tip glass-spotlight">
@@ -735,31 +726,31 @@ function updateOffsetSim(kg) {
   const trees = Math.ceil(kg / 22);
   // Estimate tree cost at $1.50 per seedling
   const cost = trees * 1.50;
-  document.getElementById('offset-slider-val').textContent = kg + ' kg';
-  document.getElementById('sim-trees').textContent = trees;
-  document.getElementById('sim-cost').textContent = '$' + cost.toFixed(2);
+  dom('offset-slider-val').textContent = kg + ' kg';
+  dom('sim-trees').textContent = trees;
+  dom('sim-cost').textContent = '$' + cost.toFixed(2);
 }
 
 // ─── GOALS ─────────────────────────────────────────────────
 function rGoals() {
   const lv = getLevel(S.xp);
-  document.getElementById('lvl-icon').textContent = lv.i;
-  document.getElementById('lvl-title').textContent = lv.t;
-  document.getElementById('lvl-num').textContent = lv.lv;
-  document.getElementById('xp-cur').textContent = S.xp + ' XP';
-  document.getElementById('xp-next').textContent = lv.next ? lv.toNext + ' XP to next' : 'Max level! 🎉';
-  setTimeout(() => document.getElementById('xp-fill').style.width = (lv.prog * 100) + '%', 100);
+  dom('lvl-icon').textContent = lv.i;
+  dom('lvl-title').textContent = lv.t;
+  dom('lvl-num').textContent = lv.lv;
+  dom('xp-cur').textContent = S.xp + ' XP';
+  dom('xp-next').textContent = lv.next ? lv.toNext + ' XP to next' : 'Max level! 🎉';
+  setTimeout(() => dom('xp-fill').style.width = (lv.prog * 100) + '%', 100);
   // Goal
-  const su = document.getElementById('goal-setup'), pr = document.getElementById('goal-prog');
+  const su = dom('goal-setup'), pr = dom('goal-prog');
   if(S.goal) {
     su.classList.add('hidden');
     pr.classList.remove('hidden');
     const wl = weekLogs(), wt = wl.reduce((s, l) => s + l.co2, 0), tg = S.goal.target, pct = Math.min(wt / tg * 100, 100), rem = Math.max(tg - wt, 0);
-    document.getElementById('ring-pct').textContent = pct.toFixed(0) + '%';
-    document.getElementById('g-cur').textContent = wt.toFixed(1);
-    document.getElementById('g-tgt').textContent = tg;
-    document.getElementById('g-rem').textContent = rem > 0 ? rem.toFixed(1) + ' kg remaining' : 'Goal reached! 🎉';
-    const circ = 2 * Math.PI * 52, rf = document.getElementById('ring-fill');
+    dom('ring-pct').textContent = pct.toFixed(0) + '%';
+    dom('g-cur').textContent = wt.toFixed(1);
+    dom('g-tgt').textContent = tg;
+    dom('g-rem').textContent = rem > 0 ? rem.toFixed(1) + ' kg remaining' : 'Goal reached! 🎉';
+    const circ = 2 * Math.PI * 52, rf = dom('ring-fill');
     rf.style.strokeDasharray = circ;
     setTimeout(() => rf.style.strokeDashoffset = circ * (1 - pct / 100), 100);
     
@@ -769,7 +760,7 @@ function rGoals() {
     pr.classList.add('hidden');
   }
   // Challenges
-  const cl = document.getElementById('ch-list'), chs = getDailyCh(5), comp = S.challenges[today()] || [];
+  const cl = dom('ch-list'), chs = getDailyCh(5), comp = S.challenges[today()] || [];
   cl.innerHTML = chs.map(c => `
     <div class="ch-card glass-spotlight ${comp.includes(c.id) ? 'done' : ''}" data-c="${c.id}">
       <div class="ch-check">${comp.includes(c.id) ? '✓' : ''}</div>
@@ -783,13 +774,13 @@ function rGoals() {
     </div>`).join('');
   cl.querySelectorAll('.ch-card').forEach(c => c.onclick = () => toggleCh(c.dataset.c));
   // Badges
-  document.getElementById('badge-ct').textContent = S.badges.length + ' / ' + BADGES.length;
-  document.getElementById('badges').innerHTML = BADGES.map(b => `<div class="badge-item glass-spotlight ${S.badges.includes(b.id) ? 'unlocked' : 'locked'}" title="${escapeHTML(b.d)}" aria-label="${escapeHTML(b.l)}: ${escapeHTML(b.d)} (${S.badges.includes(b.id) ? 'Unlocked' : 'Locked'})"><span class="badge-bi" role="img" aria-hidden="true">${escapeHTML(b.i)}</span><span class="badge-bl">${escapeHTML(b.l)}</span></div>`).join('');
+  dom('badge-ct').textContent = S.badges.length + ' / ' + BADGES.length;
+  dom('badges').innerHTML = BADGES.map(b => `<div class="badge-item glass-spotlight ${S.badges.includes(b.id) ? 'unlocked' : 'locked'}" title="${escapeHTML(b.d)}" aria-label="${escapeHTML(b.l)}: ${escapeHTML(b.d)} (${S.badges.includes(b.id) ? 'Unlocked' : 'Locked'})"><span class="badge-bi" role="img" aria-hidden="true">${escapeHTML(b.i)}</span><span class="badge-bl">${escapeHTML(b.l)}</span></div>`).join('');
 }
 
 // ─── HISTORY ───────────────────────────────────────────────
 function rHistory() {
-  const fs = document.getElementById('f-start'), fe = document.getElementById('f-end');
+  const fs = dom('f-start'), fe = dom('f-end');
   if(!fs.value) {
     const d = new Date();
     d.setDate(d.getDate() - 30);
@@ -800,7 +791,7 @@ function rHistory() {
 }
 
 function updHistory() {
-  const sd = document.getElementById('f-start')?.value || '', ed = document.getElementById('f-end')?.value || '', cat = document.getElementById('f-cat')?.value || 'all';
+  const sd = dom('f-start')?.value || '', ed = dom('f-end')?.value || '', cat = dom('f-cat')?.value || 'all';
   let fl = S.logs.filter(l => {
     if(sd && l.date < sd) return false;
     if(ed && l.date > ed) return false;
@@ -808,11 +799,11 @@ function updHistory() {
     return true;
   }).sort((a, b) => b.date.localeCompare(a.date) || ((b.time || '').localeCompare(a.time || '')));
   const tt = fl.reduce((s, l) => s + l.co2, 0), ud = new Set(fl.map(l => l.date)).size;
-  document.getElementById('h-total').textContent = tt.toFixed(2);
-  document.getElementById('h-entries').textContent = fl.length;
-  document.getElementById('h-avg').textContent = (ud ? tt / ud : 0).toFixed(2);
+  dom('h-total').textContent = tt.toFixed(2);
+  dom('h-entries').textContent = fl.length;
+  dom('h-avg').textContent = (ud ? tt / ud : 0).toFixed(2);
   drawMonthly(fl);
-  const el = document.getElementById('hist-list');
+  const el = dom('hist-list');
   if(!fl.length) {
     el.innerHTML = '<div class="empty"><span class="empty-icon" role="img" aria-hidden="true">📋</span><p>No activities found.</p></div>';
     return;
@@ -844,8 +835,8 @@ function updHistory() {
 
 // ─── SETTINGS VIEW ─────────────────────────────────────────
 function rSettings() {
-  document.getElementById('set-region').value = S.region || 'world';
-  document.getElementById('set-budget').value = S.budget || '';
+  dom('set-region').value = S.region || 'world';
+  dom('set-budget').value = S.budget || '';
 }
 
 // ─── CORE ACTIONS ──────────────────────────────────────────
@@ -937,9 +928,9 @@ function checkBadges() {
 
 // ─── UI HELPERS ────────────────────────────────────────────
 function toast(msg, type = 'success') {
-  const t = document.getElementById('toast'), ic = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
-  document.getElementById('toast-i').textContent = ic[type] || '✅';
-  document.getElementById('toast-m').textContent = msg;
+  const t = dom('toast'), ic = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+  dom('toast-i').textContent = ic[type] || '✅';
+  dom('toast-m').textContent = msg;
   t.classList.remove('hidden');
   t.style.animation = 'none';
   t.offsetHeight;
@@ -949,23 +940,23 @@ function toast(msg, type = 'success') {
 }
 
 function showModal(b) {
-  document.getElementById('m-icon').textContent = b.i || b.icon;
-  document.getElementById('m-name').textContent = b.l || b.label;
-  document.getElementById('m-desc').textContent = b.d || b.description;
-  document.getElementById('modal').classList.remove('hidden');
+  dom('m-icon').textContent = b.i || b.icon;
+  dom('m-name').textContent = b.l || b.label;
+  dom('m-desc').textContent = b.d || b.description;
+  dom('modal').classList.remove('hidden');
 }
 
 function updateHdr() {
   const lv = getLevel(S.xp);
-  document.getElementById('h-lvl-icon').textContent = lv.i;
-  document.getElementById('h-lvl-text').textContent = 'Lvl ' + lv.lv;
-  document.getElementById('h-xp-fill').style.width = (lv.prog * 100) + '%';
+  dom('h-lvl-icon').textContent = lv.i;
+  dom('h-lvl-text').textContent = 'Lvl ' + lv.lv;
+  dom('h-xp-fill').style.width = (lv.prog * 100) + '%';
 }
 
 function setTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
   S.theme = t;
-  document.getElementById('theme-ico').textContent = t === 'dark' ? '🌙' : '☀️';
+  dom('theme-ico').textContent = t === 'dark' ? '🌙' : '☀️';
   save();
   setTimeout(() => render(location.hash.slice(1) || 'dash'), 80);
 }
@@ -1018,13 +1009,13 @@ function resetData() {
 // ─── EVENT BINDING ─────────────────────────────────────────
 function bind() {
   document.querySelectorAll('.nav-btn').forEach(b => b.onclick = () => nav(b.dataset.v));
-  document.getElementById('btn-theme').onclick = () => setTheme(S.theme === 'dark' ? 'light' : 'dark');
-  document.getElementById('btn-goto-log').onclick = () => nav('log');
-  document.getElementById('btn-close-lf').onclick = hideLF;
+  dom('btn-theme').onclick = () => setTheme(S.theme === 'dark' ? 'light' : 'dark');
+  dom('btn-goto-log').onclick = () => nav('log');
+  dom('btn-close-lf').onclick = hideLF;
 
   // Sync Input Box & Range Slider
-  const amtInput = document.getElementById('lf-amount');
-  const amtSlider = document.getElementById('lf-slider');
+  const amtInput = dom('lf-amount');
+  const amtSlider = dom('lf-slider');
   
   amtInput.oninput = () => {
     amtSlider.value = amtInput.value;
@@ -1032,21 +1023,21 @@ function bind() {
   };
   amtSlider.oninput = () => {
     amtInput.value = amtSlider.value;
-    document.getElementById('lf-slider-val').textContent = amtSlider.value + ' ' + (EF[selCat]?.acts[selAct]?.u || '');
+    dom('lf-slider-val').textContent = amtSlider.value + ' ' + (EF[selCat]?.acts[selAct]?.u || '');
     updPreview();
   };
 
   // Adjusters
-  document.getElementById('btn-dec').onclick = () => {
+  dom('btn-dec').onclick = () => {
     amtInput.value = Math.max(0, (parseFloat(amtInput.value) || 0) - 0.5);
     amtSlider.value = amtInput.value;
-    document.getElementById('lf-slider-val').textContent = amtSlider.value + ' ' + (EF[selCat]?.acts[selAct]?.u || '');
+    dom('lf-slider-val').textContent = amtSlider.value + ' ' + (EF[selCat]?.acts[selAct]?.u || '');
     updPreview();
   };
-  document.getElementById('btn-inc').onclick = () => {
+  dom('btn-inc').onclick = () => {
     amtInput.value = (parseFloat(amtInput.value) || 0) + 0.5;
     amtSlider.value = amtInput.value;
-    document.getElementById('lf-slider-val').textContent = amtSlider.value + ' ' + (EF[selCat]?.acts[selAct]?.u || '');
+    dom('lf-slider-val').textContent = amtSlider.value + ' ' + (EF[selCat]?.acts[selAct]?.u || '');
     updPreview();
   };
 
@@ -1060,12 +1051,12 @@ function bind() {
         amtInput.value = (parseFloat(amtInput.value) || 0) + parseFloat(type);
       }
       amtSlider.value = amtInput.value;
-      document.getElementById('lf-slider-val').textContent = amtSlider.value + ' ' + (EF[selCat]?.acts[selAct]?.u || '');
+      dom('lf-slider-val').textContent = amtSlider.value + ' ' + (EF[selCat]?.acts[selAct]?.u || '');
       updPreview();
     };
   });
 
-  document.getElementById('btn-submit-log').onclick = () => {
+  dom('btn-submit-log').onclick = () => {
     if(!selCat || !selAct) return;
     const amt = parseFloat(amtInput.value) || 0;
     if(amt <= 0) { toast('Enter a valid amount', 'warning'); return; }
@@ -1073,8 +1064,8 @@ function bind() {
     hideLF();
   };
 
-  document.getElementById('btn-set-goal').onclick = () => {
-    const v = parseFloat(document.getElementById('goal-inp')?.value);
+  dom('btn-set-goal').onclick = () => {
+    const v = parseFloat(dom('goal-inp')?.value);
     if(!v || v <= 0) { toast('Enter a valid goal', 'warning'); return; }
     S.goal = { target: v, start: weekStart() };
     award('goal_set');
@@ -1082,22 +1073,22 @@ function bind() {
     rGoals();
     toast('🎯 Goal set!');
   };
-  document.getElementById('btn-reset-goal').onclick = () => { S.goal = null; save(); rGoals(); };
-  document.getElementById('btn-close-modal').onclick = () => document.getElementById('modal').classList.add('hidden');
-  document.getElementById('btn-re-tips').onclick = rTips;
-  ['f-start', 'f-end', 'f-cat'].forEach(id => document.getElementById(id).onchange = updHistory);
+  dom('btn-reset-goal').onclick = () => { S.goal = null; save(); rGoals(); };
+  dom('btn-close-modal').onclick = () => dom('modal').classList.add('hidden');
+  dom('btn-re-tips').onclick = rTips;
+  ['f-start', 'f-end', 'f-cat'].forEach(id => dom(id).onchange = updHistory);
   window.onhashchange = () => nav(location.hash.slice(1) || 'dash');
   
   // Settings view binds
-  document.getElementById('set-region').onchange = (e) => { S.region = e.target.value; save(); toast('🌍 Regional benchmark updated!'); };
-  document.getElementById('set-budget').oninput = (e) => { const v = parseFloat(e.target.value); S.budget = v > 0 ? v : null; save(); };
-  document.getElementById('btn-export').onclick = exportData;
-  document.getElementById('btn-import').onclick = () => document.getElementById('file-import').click();
-  document.getElementById('file-import').onchange = importData;
-  document.getElementById('btn-reset-data').onclick = resetData;
+  dom('set-region').onchange = (e) => { S.region = e.target.value; save(); toast('🌍 Regional benchmark updated!'); };
+  dom('set-budget').oninput = (e) => { const v = parseFloat(e.target.value); S.budget = v > 0 ? v : null; save(); };
+  dom('btn-export').onclick = exportData;
+  dom('btn-import').onclick = () => dom('file-import').click();
+  dom('file-import').onchange = importData;
+  dom('btn-reset-data').onclick = resetData;
 
   // Offset Simulator Slider
-  const offsetSlider = document.getElementById('offset-slider');
+  const offsetSlider = dom('offset-slider');
   if(offsetSlider) {
     offsetSlider.oninput = (e) => {
       updateOffsetSim(parseFloat(e.target.value) || 0);
@@ -1116,7 +1107,7 @@ function bind() {
   });
 
   // Interactive Donut Chart Hover listener
-  const donutCanvas = document.getElementById('c-donut');
+  const donutCanvas = dom('c-donut');
   if (donutCanvas) {
     donutCanvas.onmousemove = (e) => {
       const rect = donutCanvas.getBoundingClientRect();
@@ -1159,8 +1150,8 @@ function bind() {
             const catName = EF[catKey].label;
             const catVal = ct[catKey];
             
-            document.getElementById('donut-val').textContent = catVal.toFixed(2);
-            document.getElementById('chart-lbl').textContent = catName;
+            dom('donut-val').textContent = catVal.toFixed(2);
+            dom('chart-lbl').textContent = catName;
             
             document.querySelectorAll('.legend-row').forEach((row, i) => {
               if (i === hoveredIdx) {
@@ -1190,8 +1181,8 @@ function bind() {
       const tl = todayLogs(), tt = tl.reduce((s, l) => s + l.co2, 0);
       const ct = catTotals(tl), keys = Object.keys(ct);
       
-      document.getElementById('donut-val').textContent = tt.toFixed(2);
-      document.getElementById('chart-lbl').textContent = 'kg CO₂';
+      dom('donut-val').textContent = tt.toFixed(2);
+      dom('chart-lbl').textContent = 'kg CO₂';
       
       document.querySelectorAll('.legend-row').forEach(row => {
         row.style.transform = '';
@@ -1217,7 +1208,7 @@ function init() {
   nav(location.hash.slice(1) || 'dash');
 
   setTimeout(() => {
-    const ls = document.getElementById('loading'), ap = document.getElementById('app');
+    const ls = dom('loading'), ap = dom('app');
     ls.style.animation = 'fadeOut 0.5s ease forwards';
     setTimeout(() => {
       ls.style.display = 'none';
@@ -1234,7 +1225,12 @@ function init() {
       getLevel,
       defaults,
       getGreeting,
-      escapeHTML
+      escapeHTML,
+      toLocalYYYYMMDD,
+      today,
+      weekStart,
+      uid,
+      catTotals
     };
   }
 
