@@ -5,6 +5,18 @@
 (function(){
 'use strict';
 
+// ─── DOM CACHE OPTIMIZATION ─────────────────────────────────
+const DOM_CACHE = {};
+if (typeof document !== 'undefined') {
+  const getElementByIdOriginal = document.getElementById;
+  document.getElementById = function(id) {
+    if (!DOM_CACHE[id]) {
+      DOM_CACHE[id] = getElementByIdOriginal.call(document, id);
+    }
+    return DOM_CACHE[id];
+  };
+}
+
 // ─── STATE & STORAGE ───────────────────────────────────────
 const SK = 'ecotrack_v2';
 let S = load();
@@ -135,6 +147,17 @@ const weekLogs = () => { const ws = weekStart(); return S.logs.filter(l => l.dat
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const calcCO2 = (cat, act, amt) => { const a = EF[cat]?.acts[act]; return a ? +(a.f * amt).toFixed(3) : 0; };
 const fmtDate = s => { const d = new Date(s + 'T00:00:00'); return d.toLocaleDateString('en', { month: 'long', day: 'numeric', year: 'numeric' }); };
+
+const escapeHTML = str => {
+  if (typeof str !== 'string') return str;
+  return str.replace(/[&<>'"]/g, m => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[m] || m));
+};
 
 const catTotals = logs => {
   const t = {};
@@ -493,7 +516,7 @@ function rDash() {
   document.getElementById('legend').innerHTML = keys.map(k => `
     <div class="legend-row">
       <span class="legend-dot" style="background:${CAT_COLORS[k]}"></span>
-      <span>${EF[k].icon} ${EF[k].label}</span>
+      <span><span role="img" aria-hidden="true">${escapeHTML(EF[k].icon)}</span> ${escapeHTML(EF[k].label)}</span>
       <span class="legend-val">${ct[k].toFixed(2)}</span>
     </div>`).join('');
   drawTrend(last7());
@@ -501,7 +524,7 @@ function rDash() {
   const qlg = document.getElementById('ql-grid');
   qlg.innerHTML = PRESETS.map(p => {
     const co2 = calcCO2(p.cat, p.act, p.amt);
-    return `<button class="ql-btn" data-p="${p.id}"><span class="ql-icon">${p.i}</span><span class="ql-label">${p.l}</span><span class="ql-co2">${co2.toFixed(2)} kg</span></button>`;
+    return `<button class="ql-btn" data-p="${escapeHTML(p.id)}"><span class="ql-icon" role="img" aria-hidden="true">${escapeHTML(p.i)}</span><span class="ql-label">${escapeHTML(p.l)}</span><span class="ql-co2">${co2.toFixed(2)} kg</span></button>`;
   }).join('');
   qlg.querySelectorAll('.ql-btn').forEach(b => b.onclick = () => {
     const pr = PRESETS.find(p => p.id === b.dataset.p);
@@ -516,7 +539,7 @@ function rDash() {
   dc.innerHTML = chs.map(c => `
     <div class="ch-card ${comp.includes(c.id) ? 'done' : ''}" data-c="${c.id}">
       <div class="ch-check">${comp.includes(c.id) ? '✓' : ''}</div>
-      <span class="ch-text">${c.t}</span>
+      <span class="ch-text">${escapeHTML(c.t)}</span>
       <span class="ch-xp">+${c.xp} XP</span>
     </div>`).join('');
   dc.querySelectorAll('.ch-card').forEach(c => c.onclick = () => toggleCh(c.dataset.c));
@@ -532,7 +555,7 @@ function rCatTabs() {
   const el = document.getElementById('cat-tabs');
   el.innerHTML = Object.keys(EF).map(k => `
     <button class="cat-tab ${k === selCat ? 'active' : ''}" data-c="${k}" ${k === selCat ? `style="background:${CAT_COLORS[k]};border-color:${CAT_COLORS[k]};box-shadow: 0 0 15px ${CAT_COLORS[k]}33"` : ''} >
-      ${EF[k].icon} ${EF[k].label}
+      <span role="img" aria-hidden="true">${escapeHTML(EF[k].icon)}</span> ${escapeHTML(EF[k].label)}
     </button>`).join('');
   el.querySelectorAll('.cat-tab').forEach(b => b.onclick = () => { selCat = b.dataset.c; selAct = null; rCatTabs(); rActGrid(); hideLF(); });
 }
@@ -543,9 +566,9 @@ function rActGrid() {
     const a = acts[k];
     return `
       <div class="act-card glass-spotlight ${selAct === k ? 'sel' : ''}" data-a="${k}" ${selAct === k ? `style="border-color:${CAT_COLORS[selCat]};box-shadow:0 0 15px ${CAT_COLORS[selCat]}33"` : ''} >
-        <span class="ai">${a.i}</span>
-        <span class="al">${a.l}</span>
-        <span class="af">${a.f} kg/${a.u}</span>
+        <span class="ai" role="img" aria-hidden="true">${escapeHTML(a.i)}</span>
+        <span class="al">${escapeHTML(a.l)}</span>
+        <span class="af">${a.f} kg/${escapeHTML(a.u)}</span>
       </div>`;
   }).join('');
   el.querySelectorAll('.act-card').forEach(c => c.onclick = () => { selAct = c.dataset.a; rActGrid(); showLF(); });
@@ -605,21 +628,21 @@ function rEntries() {
   const el = document.getElementById('entries'), tl = todayLogs();
   document.getElementById('entry-ct').textContent = tl.length + ' entries';
   if(!tl.length) {
-    el.innerHTML = '<div class="empty"><span class="empty-icon">📝</span><p>No entries yet. Start logging!</p></div>';
+    el.innerHTML = '<div class="empty"><span class="empty-icon" role="img" aria-hidden="true">📝</span><p>No entries yet. Start logging!</p></div>';
     return;
   }
   el.innerHTML = tl.map(e => {
     const a = EF[e.cat]?.acts[e.act];
     return `
       <div class="entry glass-spotlight">
-        <span class="entry-icon">${a?.i || '📋'}</span>
+        <span class="entry-icon" role="img" aria-hidden="true">${escapeHTML(a?.i || '📋')}</span>
         <div class="entry-info">
-          <div class="entry-name">${a?.l || e.act}</div>
-          <div class="entry-detail">${e.amt} ${a?.u || 'units'}</div>
+          <div class="entry-name">${escapeHTML(a?.l || e.act)}</div>
+          <div class="entry-detail">${e.amt} ${escapeHTML(a?.u || 'units')}</div>
         </div>
         <span class="entry-co2" style="color:${CAT_COLORS[e.cat]}">${e.co2.toFixed(2)} kg</span>
-        <span class="entry-time">${e.time}</span>
-        <button class="entry-del" data-id="${e.id}">🗑️</button>
+        <span class="entry-time">${escapeHTML(e.time)}</span>
+        <button class="entry-del" data-id="${e.id}" aria-label="Delete entry">🗑️</button>
       </div>`;
   }).join('');
   el.querySelectorAll('.entry-del').forEach(b => b.onclick = e => { e.stopPropagation(); delEntry(b.dataset.id); });
@@ -690,7 +713,7 @@ function rInsights() {
       { q: 'If you had one meatless day per week...', a: 'Save ~200 kg CO₂/year — equivalent to 800 km less driving! 🥗' }
     );
   }
-  wif.innerHTML = scenarios.slice(0, 3).map(s => `<div class="whatif-card glass"><p class="whatif-q">${s.q}</p><p class="whatif-a">${s.a}</p></div>`).join('');
+  wif.innerHTML = scenarios.slice(0, 3).map(s => `<div class="whatif-card glass"><p class="whatif-q">${escapeHTML(s.q)}</p><p class="whatif-a">${escapeHTML(s.a)}</p></div>`).join('');
 }
 
 function rTips() {
@@ -698,10 +721,10 @@ function rTips() {
   const impL = { high: 'High Impact', medium: 'Medium', low: 'Low' };
   el.innerHTML = tips.map(t => `
     <div class="tip glass-spotlight">
-      <span class="tip-icon">💡</span>
+      <span class="tip-icon" role="img" aria-hidden="true">💡</span>
       <div>
-        <span class="tip-badge ${t.imp}">${impL[t.imp]}</span>
-        <p class="tip-text">${t.t}</p>
+        <span class="tip-badge ${escapeHTML(t.imp)}">${escapeHTML(impL[t.imp])}</span>
+        <p class="tip-text">${escapeHTML(t.t)}</p>
         ${t.s > 0 ? `<p class="tip-save">Potential: ~${t.s} kg CO₂/year</p>` : ''}
       </div>
     </div>`).join('');
@@ -751,9 +774,9 @@ function rGoals() {
     <div class="ch-card glass-spotlight ${comp.includes(c.id) ? 'done' : ''}" data-c="${c.id}">
       <div class="ch-check">${comp.includes(c.id) ? '✓' : ''}</div>
       <div style="flex:1">
-        <span class="ch-text">${c.t}</span>
+        <span class="ch-text">${escapeHTML(c.t)}</span>
         <div style="display:flex;gap:5px;margin-top:5px">
-          <span class="ch-diff ${c.diff}">${c.diff}</span>
+          <span class="ch-diff ${escapeHTML(c.diff)}">${escapeHTML(c.diff)}</span>
         </div>
       </div>
       <span class="ch-xp">+${c.xp} XP</span>
@@ -761,7 +784,7 @@ function rGoals() {
   cl.querySelectorAll('.ch-card').forEach(c => c.onclick = () => toggleCh(c.dataset.c));
   // Badges
   document.getElementById('badge-ct').textContent = S.badges.length + ' / ' + BADGES.length;
-  document.getElementById('badges').innerHTML = BADGES.map(b => `<div class="badge-item glass-spotlight ${S.badges.includes(b.id) ? 'unlocked' : 'locked'}" title="${b.d}"><span class="badge-bi">${b.i}</span><span class="badge-bl">${b.l}</span></div>`).join('');
+  document.getElementById('badges').innerHTML = BADGES.map(b => `<div class="badge-item glass-spotlight ${S.badges.includes(b.id) ? 'unlocked' : 'locked'}" title="${escapeHTML(b.d)}" aria-label="${escapeHTML(b.l)}: ${escapeHTML(b.d)} (${S.badges.includes(b.id) ? 'Unlocked' : 'Locked'})"><span class="badge-bi" role="img" aria-hidden="true">${escapeHTML(b.i)}</span><span class="badge-bl">${escapeHTML(b.l)}</span></div>`).join('');
 }
 
 // ─── HISTORY ───────────────────────────────────────────────
@@ -791,7 +814,7 @@ function updHistory() {
   drawMonthly(fl);
   const el = document.getElementById('hist-list');
   if(!fl.length) {
-    el.innerHTML = '<div class="empty"><span class="empty-icon">📋</span><p>No activities found.</p></div>';
+    el.innerHTML = '<div class="empty"><span class="empty-icon" role="img" aria-hidden="true">📋</span><p>No activities found.</p></div>';
     return;
   }
   const gr = {};
@@ -800,18 +823,18 @@ function updHistory() {
     const dt = gr[d].reduce((s, l) => s + l.co2, 0);
     return `
       <div class="hist-day">
-        <div class="hist-date">${fmtDate(d)} — ${dt.toFixed(2)} kg CO₂</div>
+        <div class="hist-date">${escapeHTML(fmtDate(d))} — ${dt.toFixed(2)} kg CO₂</div>
         ${gr[d].map(e => {
           const a = EF[e.cat]?.acts[e.act];
           return `
             <div class="entry glass-spotlight">
-              <span class="entry-icon">${a?.i || '📋'}</span>
+              <span class="entry-icon" role="img" aria-hidden="true">${escapeHTML(a?.i || '📋')}</span>
               <div class="entry-info">
-                <div class="entry-name">${a?.l || e.act}</div>
-                <div class="entry-detail">${e.amt} ${a?.u || ''} • ${e.cat}</div>
+                <div class="entry-name">${escapeHTML(a?.l || e.act)}</div>
+                <div class="entry-detail">${e.amt} ${escapeHTML(a?.u || '')} • ${escapeHTML(e.cat)}</div>
               </div>
               <span class="entry-co2" style="color:${CAT_COLORS[e.cat]}">${e.co2.toFixed(2)} kg</span>
-              <button class="entry-del" data-id="${e.id}">🗑️</button>
+              <button class="entry-del" data-id="${e.id}" aria-label="Delete entry">🗑️</button>
             </div>`;
         }).join('')}
       </div>`;
@@ -1204,5 +1227,18 @@ function init() {
   }, 1800);
 }
 
-if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  // Expose functions for unit testing if in a Node/Test environment
+  if (typeof globalThis !== 'undefined' && typeof document === 'undefined') {
+    globalThis.test_exports = {
+      calcCO2,
+      getLevel,
+      defaults,
+      getGreeting,
+      escapeHTML
+    };
+  }
+
+  if (typeof document !== 'undefined') {
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  }
 })();

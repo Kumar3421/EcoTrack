@@ -1,0 +1,8 @@
+.git
+.gitignore
+node_modules
+package.json
+package-lock.json
+app.test.js
+search_edits.py
+*.md

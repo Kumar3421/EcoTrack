@@ -19,7 +19,7 @@
 <!-- Loading Screen -->
 <div id="loading" class="loading">
   <div class="loading-inner">
-    <span class="loading-globe">🌍</span>
+    <span role="img" aria-label="Globe" class="loading-globe">🌍</span>
     <h1 class="loading-name">EcoTrack</h1>
     <div class="loading-bar"><div class="loading-fill"></div></div>
   </div>
@@ -43,11 +43,11 @@
 
   <!-- Header -->
   <header class="app-header">
-    <div class="logo"><span class="logo-icon">🌍</span><h1 class="logo-text">EcoTrack</h1></div>
+    <div class="logo"><span role="img" aria-label="EcoTrack Globe Logo" class="logo-icon">🌍</span><h1 class="logo-text">EcoTrack</h1></div>
     <div class="header-actions">
-      <div class="level-pill"><span id="h-lvl-icon">🌱</span><span id="h-lvl-text">Lvl 1</span></div>
+      <div class="level-pill"><span role="img" aria-label="Level Badge" id="h-lvl-icon">🌱</span><span id="h-lvl-text">Lvl 1</span></div>
       <div class="xp-mini"><div class="xp-mini-fill" id="h-xp-fill" style="width:0%"></div></div>
-      <button class="btn-icon" id="btn-theme" aria-label="Toggle theme"><span id="theme-ico">🌙</span></button>
+      <button class="btn-icon" id="btn-theme" aria-label="Toggle theme"><span id="theme-ico" role="img" aria-label="Theme mode icon">🌙</span></button>
     </div>
   </header>
 
@@ -59,14 +59,14 @@
       <section id="v-dash" class="view active">
         <!-- Daily Budget Warning Banner -->
         <div id="budget-warning" class="budget-warning hidden">
-          <span>⚠️</span>
+          <span role="img" aria-label="Warning">⚠️</span>
           <span>Daily Carbon Budget Exceeded! Try swapping activities to reduce footprint.</span>
         </div>
 
         <div class="hero glass glass-spotlight">
           <div class="hero-top">
             <div><h2 class="greeting" id="greet">Good evening</h2><p class="date-text" id="hero-date"></p></div>
-            <div class="streak" id="streak-wrap"><span class="streak-fire">🔥</span><span id="streak-n">0</span><span>day streak</span></div>
+            <div class="streak" id="streak-wrap"><span role="img" aria-label="Streak Fire" class="streak-fire">🔥</span><span id="streak-n">0</span><span>day streak</span></div>
           </div>
           <div class="hero-metric">
             <span class="big-num" id="today-co2">0.00</span><span class="big-unit">kg CO₂</span>
@@ -87,14 +87,14 @@
         <div class="section-head"><h3>Today's Breakdown</h3></div>
         <div class="glass chart-wrap glass-spotlight">
           <div class="chart-box">
-            <canvas id="c-donut" width="200" height="200"></canvas>
+            <canvas id="c-donut" width="200" height="200" aria-label="Today's Carbon Footprint Category Breakdown Chart"></canvas>
             <div class="chart-center"><span class="chart-val" id="donut-val">0.00</span><span class="chart-lbl">kg CO₂</span></div>
           </div>
           <div class="legend" id="legend"></div>
         </div>
         
         <div class="section-head"><h3>7-Day Trend</h3></div>
-        <div class="glass trend-wrap glass-spotlight"><canvas id="c-trend" width="600" height="180"></canvas></div>
+        <div class="glass trend-wrap glass-spotlight"><canvas id="c-trend" width="600" height="180" aria-label="7-Day Carbon Footprint Trend Chart"></canvas></div>
         
         <div class="section-head"><h3>Today's Challenges</h3></div>
         <div id="dash-ch" class="challenges"></div>
@@ -110,7 +110,7 @@
         <!-- Interactive Log Form -->
         <div class="log-form glass glass-spotlight hidden" id="log-form">
           <div class="lf-head">
-            <span class="lf-icon" id="lf-icon">🚗</span>
+            <span class="lf-icon" id="lf-icon" role="img" aria-label="Activity Category Icon">🚗</span>
             <div><h3 id="lf-title">Activity</h3><p class="lf-unit" id="lf-unit">Unit: km</p></div>
             <button class="btn-close" id="btn-close-lf" aria-label="Close form">✕</button>
           </div>
@@ -126,7 +126,7 @@
             
             <!-- Range Slider -->
             <div class="slider-container">
-              <input type="range" id="lf-slider" class="slider" min="1" max="100" value="1" step="0.5">
+              <input type="range" id="lf-slider" class="slider" min="1" max="100" value="1" step="0.5" aria-label="Activity Amount Slider">
               <span class="slider-val" id="lf-slider-val">1</span>
             </div>
             
@@ -183,7 +183,7 @@
         <div class="glass simulator-card glass-spotlight">
           <p class="whatif-q">Calculate how many trees are needed to offset your weekly footprint:</p>
           <div class="slider-container" style="margin-top: 10px;">
-            <input type="range" id="offset-slider" class="slider" min="0" max="150" value="0" step="1">
+            <input type="range" id="offset-slider" class="slider" min="0" max="150" value="0" step="1" aria-label="Carbon Offset Simulator Slider">
             <span class="slider-val" id="offset-slider-val" style="width: 60px;">0 kg</span>
           </div>
           <div class="sim-grid">
@@ -200,7 +200,7 @@
         
         <div class="glass level-card glass-spotlight">
           <div class="level-main">
-            <span class="level-big" id="lvl-icon">🌱</span>
+            <span role="img" aria-label="Level Badge Icon" class="level-big" id="lvl-icon">🌱</span>
             <div class="level-info"><h3 id="lvl-title">Seedling</h3><p class="level-sub">Level <span id="lvl-num">1</span></p></div>
           </div>
           <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
@@ -211,7 +211,7 @@
         <div class="glass goal-card glass-spotlight">
           <div class="goal-setup" id="goal-setup">
             <p>Set a weekly CO₂ reduction target</p>
-            <div class="goal-input-row"><input type="number" id="goal-inp" class="inp" placeholder="e.g. 80" min="1"><span class="goal-unit">kg CO₂/week</span></div>
+            <div class="goal-input-row"><input type="number" id="goal-inp" class="inp" placeholder="e.g. 80" min="1" aria-label="Weekly Carbon Reduction Goal in kg"><span class="goal-unit">kg CO₂/week</span></div>
             <button class="btn-primary" id="btn-set-goal">Set Goal</button>
           </div>
           <div class="goal-progress hidden" id="goal-prog">
@@ -262,7 +262,7 @@
         </div>
         
         <div class="section-head"><h3>Monthly Overview</h3></div>
-        <div class="glass monthly-wrap glass-spotlight"><canvas id="c-monthly" width="600" height="220"></canvas></div>
+        <div class="glass monthly-wrap glass-spotlight"><canvas id="c-monthly" width="600" height="220" aria-label="Monthly Carbon Footprint Overview Chart"></canvas></div>
         
         <div class="section-head"><h3>Activity Log</h3></div>
         <div class="hist-list" id="hist-list"></div>
@@ -279,7 +279,7 @@
             <h3 class="setting-title">Comparison Region</h3>
             <p class="setting-desc">Set your local region to adjust national carbon averages.</p>
             <div class="setting-ctrl">
-              <select id="set-region" class="inp">
+              <select id="set-region" class="inp" aria-label="Comparison Region Selection">
                 <option value="world">World Average (12.88 kg/day)</option>
                 <option value="usa">United States (42.52 kg/day)</option>
                 <option value="eu">European Union (18.63 kg/day)</option>
@@ -294,7 +294,7 @@
             <h3 class="setting-title">Daily Carbon Budget</h3>
             <p class="setting-desc">Set a maximum target daily carbon limit (kg CO₂). Emitting more shows warning banners.</p>
             <div class="setting-ctrl" style="max-width: 180px;">
-              <input type="number" id="set-budget" class="inp" placeholder="e.g. 15" min="1">
+              <input type="number" id="set-budget" class="inp" placeholder="e.g. 15" min="1" aria-label="Daily Carbon Budget in kg">
             </div>
           </div>
           
@@ -305,7 +305,7 @@
             <div class="setting-ctrl">
               <button class="btn-secondary" id="btn-export">Export Data</button>
               <button class="btn-secondary" id="btn-import">Import Data</button>
-              <input type="file" id="file-import" class="hidden" accept=".json">
+              <input type="file" id="file-import" class="hidden" accept=".json" aria-label="Import Data JSON Backup File">
             </div>
           </div>
           
@@ -325,12 +325,12 @@
 
   <!-- Floating Bottom Navigation -->
   <nav class="bottom-nav">
-    <button class="nav-btn active" data-v="dash"><span class="ni">📊</span><span class="nl">Dashboard</span></button>
-    <button class="nav-btn" data-v="log"><span class="ni">➕</span><span class="nl">Log</span></button>
-    <button class="nav-btn" data-v="insights"><span class="ni">💡</span><span class="nl">Insights</span></button>
-    <button class="nav-btn" data-v="goals"><span class="ni">🎯</span><span class="nl">Goals</span></button>
-    <button class="nav-btn" data-v="history"><span class="ni">📅</span><span class="nl">History</span></button>
-    <button class="nav-btn" data-v="settings"><span class="ni">⚙️</span><span class="nl">Settings</span></button>
+    <button class="nav-btn active" data-v="dash"><span class="ni" aria-hidden="true">📊</span><span class="nl">Dashboard</span></button>
+    <button class="nav-btn" data-v="log"><span class="ni" aria-hidden="true">➕</span><span class="nl">Log</span></button>
+    <button class="nav-btn" data-v="insights"><span class="ni" aria-hidden="true">💡</span><span class="nl">Insights</span></button>
+    <button class="nav-btn" data-v="goals"><span class="ni" aria-hidden="true">🎯</span><span class="nl">Goals</span></button>
+    <button class="nav-btn" data-v="history"><span class="ni" aria-hidden="true">📅</span><span class="nl">History</span></button>
+    <button class="nav-btn" data-v="settings"><span class="ni" aria-hidden="true">⚙️</span><span class="nl">Settings</span></button>
   </nav>
 </div>
 
@@ -340,7 +340,7 @@
 <!-- Badge Unlock Celebration Modal -->
 <div class="modal-bg hidden" id="modal">
   <div class="modal glass">
-    <span class="modal-bi" id="m-icon">🏆</span>
+    <span class="modal-bi" id="m-icon" role="img" aria-label="Achievement Trophy Icon">🏆</span>
     <h3 class="modal-title">Badge Unlocked!</h3>
     <p class="modal-name" id="m-name">Achievement</p>
     <p class="modal-desc" id="m-desc">Description</p>
